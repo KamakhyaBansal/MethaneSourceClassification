@@ -1,8 +1,11 @@
+#Creation of custom dataloader
+# Access all image files from different class folder
 folder_lst = os.listdir("/content/drive/MyDrive/Data/METER_ML/")
 train_count =0
 val_count = 0
 test_count = 0
 
+#Rechecking the number of files in each class
 for folder in folder_lst:
     print(folder+"train", len(os.listdir("/content/drive/MyDrive/Data/METER_ML/"+folder+"/train_"+folder)))
     train_count += min(1000,len(os.listdir("/content/drive/MyDrive/Data/METER_ML/"+folder+"/train_"+folder)))
@@ -11,9 +14,6 @@ for folder in folder_lst:
     print(folder+"val", len(os.listdir("/content/drive/MyDrive/Data/METER_ML/"+folder+"/val_"+folder)))
     val_count+=len(os.listdir("/content/drive/MyDrive/Data/METER_ML/"+folder+"/val_"+folder))
 print(train_count, val_count, test_count)
-#train_count = 6000
-
-val_count = 256
 
 %pip install torchinfo
 
@@ -26,58 +26,26 @@ transform = transforms.Compose([transforms.RandomHorizontalFlip(),
                                       transforms.RandomResizedCrop((224,224),scale=(0.8,1.0),ratio=(0.9,1.1)),
                                       transforms.ToTensor()
                                      ])
-#dataset_size = train_count + val_count + test_count
+dataset_size = train_count + val_count + test_count
 
+#Accessing all the classes in a list
 def get_classes(data_dir):
     all_data = datasets.ImageFolder(data_dir)
     return all_data.classes
 classes = get_classes("/content/drive/MyDrive/Data/METER_ML/")
-classes = ['CAFOs', 'Landfills', 'Mines', 'ProcessingPlants', 'RNT', 'WW']
 classes
-
+#Output is: ['CAFOs', 'Landfills', 'Mines', 'Negative', 'ProcessingPlants', 'RNT', 'WW']
 data_path = "/content/drive/MyDrive/Data/METER_ML/"
 
-40/44, 22/40, 29/41, 18/19, 46/70, 21/42
-
-# ['CAFOs', 'Landfills', 'Mines', 'Negative', 'ProcessingPlants', 'RNT', 'WW']
-# cafo_list landfill_list mine_list  negative_list  pp_list  rnt_list  ww_list
-#cafo_list = os.listdir(data_path+classes[0]+'/train_'+classes[0])[:1000]
-'''cafo_list = os.listdir(data_path+classes[0]+'/train_'+classes[0])
+#Loading all files from each class folder in seperate lists
+cafo_list = os.listdir(data_path+classes[0]+'/train_'+classes[0])
 landfill_list = os.listdir(data_path+classes[1]+'/train_'+classes[1])
 mine_list = os.listdir(data_path+classes[2]+'/train_'+classes[2])
 pp_list = os.listdir(data_path+classes[3]+'/train_'+classes[3])
 rnt_list = os.listdir(data_path+classes[4]+'/train_'+classes[4])
 ww_list = os.listdir(data_path+classes[5]+'/train_'+classes[5])
-WWtrain 4635
-WWtest 105
-WWval 39
-RNTtrain 1231
-RNTtest 94
-RNTval 50
-ProcessingPlantstrain 588
-ProcessingPlantstest 107
-ProcessingPlantsval 38
-Minestrain 598
-Minestest 71
-Minesval 39
-Landfillstrain 1286
-Landfillstest 95
-Landfillsval 43
-CAFOstrain 8191
-CAFOstest 92
-CAFOsval 47
-5186 256 564
-'''
 
-cafo_list = os.listdir(data_path+classes[0]+'/train_'+classes[0])[6500:]
-landfill_list = os.listdir(data_path+classes[1]+'/train_'+classes[1])
-mine_list = os.listdir(data_path+classes[2]+'/train_'+classes[2])
-pp_list = os.listdir(data_path+classes[3]+'/train_'+classes[3])
-rnt_list = os.listdir(data_path+classes[4]+'/train_'+classes[4])
-ww_list = os.listdir(data_path+classes[5]+'/train_'+classes[5])[3100:]
-
-len(cafo_list), len(landfill_list)*1.25, len(mine_list)*2.5, len(pp_list)*2.5, len(rnt_list)*1.25,len(ww_list)
-
+#Augmentations to supplement minor classes
 augmentation = transforms.Compose([
     transforms.RandomRotation(degrees=10),
     transforms.RandomHorizontalFlip(),
@@ -92,8 +60,10 @@ transform = transforms.Compose([transforms.RandomHorizontalFlip(),
                                     ])
 
 # cafo_list landfill_list mine_list  negative_list  pp_list  rnt_list  ww_list
+#Updated dataset size after augmentations for minor classes
 dataset_size = len(cafo_list)+(int)(len(landfill_list)*1.25)+ (int)(len(mine_list)*2.5)+ (int)(len(pp_list)*2.5)+ (int)(len(rnt_list)*1.25)+len(ww_list)
-#dataset_size = 9336
+
+#Loading images and labels in tensor images and target respectively
 images = torch.zeros([dataset_size,15,72,72])
 index = 0
 flag = 0
@@ -182,11 +152,10 @@ data_set = torch.utils.data.TensorDataset(image_tens,target_tens)
 
 train_loader = torch.utils.data.DataLoader(data_set, batch_size=1, shuffle=True, drop_last=False, pin_memory=True, num_workers=4)
 
-len(cafo_list)+(int)(len(landfill_list)*1.25)+ (int)(len(mine_list)*2.5)+ (int)(len(pp_list)*2.5)+ (int)(len(rnt_list)*1.25)+len(ww_list)
-
+#Verifying the length of loaded data
 len(train_loader)
 
-# Validation dataset
+# Validation dataset: Repeat the above procedure for creating custom validation dataset
 
 target = torch.zeros((val_count))
 index = 0
@@ -285,7 +254,7 @@ print(len(train_loader), len(val_loader))
 print(train_data_len, valid_data_len)
 
 
-# Test dataset
+# Test dataset: Repeat the above procedure for creating custom test dataset
 
 target = torch.zeros((test_count))
 index = 0
@@ -370,3 +339,4 @@ test_set = torch.utils.data.TensorDataset(image_tens,target_tens)
 test_loader = torch.utils.data.DataLoader(test_set, batch_size=1, shuffle=False, drop_last=False, num_workers=4)
 
 len(test_set)
+#All data has been loaded in respective data loaders
